@@ -9,29 +9,46 @@ const initialFormVals = {
     stars:[]
 }
 
-function EditMovie() {
+function EditMovie(props) {
+    const {movieList, setMovieList} = props;
     const history = useHistory();
     const {id} = useParams();
+    const [editedStar, setEditedStar] = useState('')
     const [editedMovie, setEditedMovie] = useState(initialFormVals)
 
-    const changehandler = event =>{
+    const changeHandler = event =>{
         const name=event.target.name;
         const value=event.target.value;
-
-        // if(name === star){
-        //     setEditedMovie({
-        //         ...editedMovie,
-        //         stars: [stars.filter((star, index)=>{
-        //             star.id !== 
-        //         })]
-        //     })
-        // }
-
         setEditedMovie({
             ...editedMovie,
             [name]: value
         });
     };
+
+    const starsChangeHandler = event =>{
+        const newStars = [...editedMovie.stars]
+        newStars.splice(event.target.id, 1, event.target.value)
+        setEditedMovie({
+            ...editedMovie,
+            stars: newStars
+        })
+    }
+
+    const submitEdit = event =>{
+        event.preventDefault();
+        axios.put(`http://localhost:5000/api/movies/${id}`, editedMovie)
+        .then(res=>{
+            console.log(res.data)
+            const newMovieList = [...movieList]
+            newMovieList.forEach((movie, index)=>{
+                if (movie.id === id){
+                    newMovieList.splice(index, 1, res.data)
+                    setMovieList(newMovieList);
+                }
+            })
+            history.push(`/`)
+        })
+    }
 
     useEffect(()=>{
         axios.get(`http://localhost:5000/api/movies/${id}`)
@@ -41,7 +58,7 @@ function EditMovie() {
         .catch(err=>console.error(err));
     },[]);
     return(
-        <form>
+        <form onSubmit={submitEdit}>
             <label>
                 Title 
                 <input
@@ -49,7 +66,7 @@ function EditMovie() {
                     name='title'
                     placeholder='title'
                     value={editedMovie.title}
-                    onChange={changehandler}
+                    onChange={changeHandler}
                 />
             </label>
             <label>
@@ -59,7 +76,7 @@ function EditMovie() {
                     name='director'
                     placeholder='director'
                     value={editedMovie.director}
-                    onChange={changehandler}
+                    onChange={changeHandler}
                 />
             </label>
             <label>
@@ -69,26 +86,27 @@ function EditMovie() {
                     name='metascore'
                     placeholder='metascore'
                     value={editedMovie.metascore}
-                    onChange={changehandler}
+                    onChange={changeHandler}
                 />
             </label>
             <label>
                 stars
                 {editedMovie.stars.map((star, index)=>{
                     return(
-                        <>
-                            <input
-                                type='text'
-                                name='star'
-                                placeholder='star'
-                                value={star}
-                                onChange={changehandler}
-                            />
-                        </>
+                        <input
+                        type='text'
+                        name='stars'
+                        id={index}
+                        placeholder='star'
+                        value={star}
+                        onChange={starsChangeHandler}
+                    />
                     )
+                    
                 })}
                 
             </label>
+            <button>Submit</button>
             
         </form>
     )
